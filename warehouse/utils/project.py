@@ -61,6 +61,8 @@ PROJECT_NAME_RE = re.compile(
     r"^([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])$", re.IGNORECASE
 )
 
+PEPXXX_PROHIBITED = re.compile(r"^(private|x[-_]|not[-_]public[-_])", re.IGNORECASE)
+
 
 def validate_project_name(name, request):
     """
@@ -98,6 +100,17 @@ def validate_project_name(name, request):
                     "See {projecthelp} for more information."
                 ).format(projecthelp=request.help_url(_anchor="admin-intervention")),
             ) from None
+
+        if request.flags.enabled(AdminFlagValue.DISALLOW_PEPXXX_UPLOAD):
+            if PEPXXX_PROHIBITED.match(name):
+                raise HTTPForbidden(
+                    (
+                        "PEP XXX names are not allowed. "
+                        "See {projecthelp} for more information."
+                    ).format(
+                        projecthelp=request.help_url(_anchor="admin-intervention")
+                    ),
+                ) from None
 
         # Before we create the project, we're going to check our prohibited
         # names to see if this project name prohibited, or if the project name
